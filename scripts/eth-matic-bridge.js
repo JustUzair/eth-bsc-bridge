@@ -27,12 +27,12 @@ async function main() {
     "https://rpc-mumbai.maticvigil.com"
   );
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, polygonProvider);
-  const signer = wallet.provider.getSigner(wallet.address);
+  const signer = polygonProvider.getSigner();
 
   const maticBridgeContract = new ethers.Contract(
     maticBridge.address,
     maticBridge.abi,
-    signer
+    wallet
   );
 
   // console.log("maticBridgeContract : ",maticBridgeContract);
@@ -74,20 +74,16 @@ async function main() {
             "-----------------------------------------------------------------------------"
           );
           const maticToBridge = (info.amountReadable * 1800) / 6; // 1800$ is ethereum price and 6$ is matic price fixed
-          // const transactionResponse = await maticBridgeContract.mint(recipient,hre.ethers.BigNumber.from(hre.ethers.utils.parseEther(maticToBridge.toString())));
-          console.log(maticToBridge);
 
-          // https://docs.ethers.io/v5/api/signer/#Signer-populateTransaction
-          let unsignedTx = await maticBridgeContract.populateTransaction.mint(
-            recipient,
-            ethers.utils
-              .parseUnits(maticToBridge.toString(), "ether")
-              .toString(),
-            info.nonce
-          );
+          let tx = await maticBridgeContract.mint(recipient,
+              ethers.utils
+                .parseUnits(maticToBridge.toString(), "ether")
+                .toString(),
+              info.nonce
+            );
+          let r = await tx.wait();
+          // console.log(r);
 
-          const txResponse = await signer.sendTransaction(unsignedTx);
-          await txResponse.wait(1);
           console.log(
             "-----------------------------------------------------------------------------"
           );
